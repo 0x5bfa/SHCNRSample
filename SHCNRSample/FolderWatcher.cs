@@ -24,18 +24,26 @@ namespace SHCNRSample
 		private static Dictionary<SHCNE_ID, string>? _eventNames;
 
 		private uint _uRegister;
+		private IShellItem* _psi;
 		private HWND _hwnd;
 		WNDPROC? _wndProc;
 		private Action<FolderWatcher, SHCNE_ID, nint, nint>? _action;
 		private bool _watchRecursively;
 
-		public string? TargetPath { get; private set; }
-
 		private FolderWatcher() { } // Seal the default constructor
 
 		public static FolderWatcher? Create(string targetPath, Action<FolderWatcher, SHCNE_ID, nint, nint> action, bool watchRecursively = false)
 		{
-			var watcher = new FolderWatcher() { _action = action, _watchRecursively = watchRecursively, TargetPath = targetPath };
+			IShellItem* psi = default;
+			fixed (char* pwszPath = targetPath)
+				PInvoke.SHCreateItemFromParsingName(pwszPath, null, IID.IID_IShellItem, (void**)&psi);
+
+			return Create(psi, action, watchRecursively);
+		}
+
+		public static FolderWatcher? Create(IShellItem* psi, Action<FolderWatcher, SHCNE_ID, nint, nint> action, bool watchRecursively = false)
+		{
+			var watcher = new FolderWatcher() { _psi = psi, _action = action, _watchRecursively = watchRecursively };
 			return watcher.InitializeWndProc() ? watcher : null;
 		}
 
@@ -43,13 +51,8 @@ namespace SHCNRSample
 		{
 			StopWatching();
 
-			using ComPtr<IShellItem> psi = default;
 			using ComHeapPtr<ITEMIDLIST> pidl = default;
-
-			fixed (char* pwszPath = TargetPath)
-				PInvoke.SHCreateItemFromParsingName(pwszPath, null, IID.IID_IShellItem, (void**)psi.GetAddressOf());
-
-			HRESULT hr = PInvoke.SHGetIDListFromObject((IUnknown*)psi.Get(), pidl.GetAddressOf());
+			HRESULT hr = PInvoke.SHGetIDListFromObject((IUnknown*)_psi, pidl.GetAddressOf());
 			if (SUCCEEDED(hr))
 			{
 				SHChangeNotifyEntry entry = default;
@@ -72,6 +75,16 @@ namespace SHCNRSample
 				PInvoke.SHChangeNotifyDeregister(_uRegister);
 				_uRegister = 0U;
 			}
+		}
+
+		public string? GetTargetPath(SIGDN sigdn = SIGDN.SIGDN_DESKTOPABSOLUTEPARSING)
+		{
+			PWSTR psz = default;
+			_psi->GetDisplayName(sigdn, &psz);
+			string str = new(psz);
+			PInvoke.CoTaskMemFree(psz);
+
+			return str;
 		}
 
 		public string? GetEventName(SHCNE_ID lEvent)
@@ -173,6 +186,8 @@ namespace SHCNRSample
 		{
 			// Prevented GC from releasing the proc reference until this instance is disposed, but now it's fine to let it release this.
 			_wndProc = null;
+
+			_psi->Release();
 		}
 	}
 }

@@ -5,7 +5,17 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:local="using:SHCNRSample"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:wctconverters="using:CommunityToolkit.WinUI.Converters"
 	mc:Ignorable="d">
+
+	<Page.Resources>
+		<ResourceDictionary>
+			<wctconverters:EmptyStringToObjectConverter
+				x:Key="EmptyStringToVisibilityConverter"
+				EmptyValue="Collapsed"
+				NotEmptyValue="Visible" />
+		</ResourceDictionary>
+	</Page.Resources>
 
 	<Grid>
 		<Grid.RowDefinitions>
@@ -15,7 +25,10 @@
 		</Grid.RowDefinitions>
 
 		<StackPanel Grid.Row="0" VerticalAlignment="Center">
-			<TextBlock Margin="16,0" Text="FolderChangeWatcher" />
+			<TextBlock
+				Margin="16,0"
+				Style="{StaticResource CaptionTextBlockStyle}"
+				Text="FolderChangeWatcher" />
 		</StackPanel>
 
 		<CommandBar
@@ -23,9 +36,14 @@
 			HorizontalAlignment="Left"
 			DefaultLabelPosition="Right"
 			IsOpen="False">
-			<AppBarButton Icon="Add" Label="Pick a folder" />
-			<AppBarButton Icon="Remove" Label="Remove a folder" />
-			<AppBarToggleButton Icon="Bookmarks" Label="Recursive" />
+			<AppBarButton
+				Command="{x:Bind ViewModel.AddFolderCommand}"
+				Icon="Add"
+				Label="Pick a folder" />
+			<AppBarToggleButton
+				Command="{x:Bind ViewModel.WatchFolderRecursivelyCheckCommand}"
+				Icon="Bookmarks"
+				Label="Recursive" />
 		</CommandBar>
 
 		<ListView
@@ -89,6 +107,15 @@
 			</ListView.GroupStyle>
 
 		</ListView>
+
+		<TextBlock
+			x:Name="MessageTextBlock"
+			Grid.Row="2"
+			HorizontalAlignment="Center"
+			VerticalAlignment="Center"
+			Style="{StaticResource BodyStrongTextBlockStyle}"
+			Text="{x:Bind ViewModel.MessageText, Mode=OneWay}"
+			Visibility="{x:Bind ViewModel.MessageText, Converter={StaticResource EmptyStringToVisibilityConverter}, Mode=OneWay}" />
 
 	</Grid>
 </Page>

@@ -14,6 +14,10 @@ RegisterClassEx
 CreateWindowEx
 GetModuleHandle
 DefWindowProc
+CoCreateInstance
+IFileDialog
+CoInitializeEx
+CoUninitialize
 
 SHCNE_ID
 WPARAM
