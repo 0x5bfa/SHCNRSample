@@ -1,0 +1,66 @@
+# Copyright (c) 2025 0x5BFA
+# Licensed under the MIT License. See the LICENSE.
+
+name: SHCNRSample CI
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/assets/**'
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - '.github/assets/**'
+      - 'docs/**'
+      - '*.md'
+
+run-name: ${{ github.event_name == 'pull_request' && 'SHCNRSample PR Validation' || 'SHCNRSample CI Validation' }}
+
+env:
+    WORKING_DIR:         '${{ github.workspace }}' # 'D:\a\SHCNRSample\SHCNRSample'
+    SOLUTION_PATH:       '${{ github.workspace }}\SHCNRSample.slnx'
+    # WAPPROJ_PATH:        '${{ github.workspace }}\SHCNRSample.WinUI.Packaging\SHCNRSample.WinUI.Packaging.wapproj'
+    # APPX_PACKAGE_DIR:    '${{ github.workspace }}\SHCNRSample.WinUI.Packaging\AppPackages'
+
+jobs:
+
+  build:
+
+    if: github.repository_owner == '0x5bfa'
+
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+        platform: [x64, ARM64]
+    env:
+      CONFIGURATION: ${{ matrix.configuration }}
+      PLATFORM: ${{ matrix.platform }}
+
+    steps:
+
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+
+    - name: Restore the solution
+      run: msbuild /restore $env:SOLUTION_PATH
+
+    - name: Build the solution
+      run: msbuild $env:SOLUTION_PATH /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM
+
+    # - if: env.CONFIGURATION == 'Release' && env.PLATFORM == 'x64'
+    #   name: Upload the packages to the Artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: 'Appx Packages (${{ env.CONFIGURATION }},${{ env.PLATFORM }})'
+    #     path: ${{ env.APPX_PACKAGE_DIR }}
