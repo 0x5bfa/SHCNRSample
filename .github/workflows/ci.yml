@@ -6,7 +6,7 @@ name: SHCNRSample CI
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - '.github/assets/**'
       - 'docs/**'
