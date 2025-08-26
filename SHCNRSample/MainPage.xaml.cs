@@ -10,5 +10,10 @@ namespace SHCNRSample
 		{
 			InitializeComponent();
 		}
-	}
+
+		private void AppBarToggleButton_Checked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+		{
+
+        }
+    }
 }

@@ -15,7 +15,7 @@ CreateWindowEx
 GetModuleHandle
 DefWindowProc
 CoCreateInstance
-IFileDialog
+IFileOpenDialog
 CoInitializeEx
 CoUninitialize
 

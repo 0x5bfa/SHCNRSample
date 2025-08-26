@@ -14,6 +14,7 @@
 				x:Key="EmptyStringToVisibilityConverter"
 				EmptyValue="Collapsed"
 				NotEmptyValue="Visible" />
+			<wctconverters:BoolNegationConverter x:Key="BoolNegationConverter" />
 		</ResourceDictionary>
 	</Page.Resources>
 
@@ -39,10 +40,32 @@
 			<AppBarButton
 				Command="{x:Bind ViewModel.AddFolderCommand}"
 				Icon="Add"
-				Label="Pick a folder" />
+				IsEnabled="{x:Bind ViewModel.FolderAdded, Converter={StaticResource BoolNegationConverter}, Mode=OneWay}"
+				Label="Add folder" />
+			<AppBarButton
+				Command="{x:Bind ViewModel.RemoveFolderCommand}"
+				Icon="Remove"
+				IsEnabled="{x:Bind ViewModel.FolderAdded, Mode=OneWay}"
+				Label="Remove folder" />
+			<AppBarButton
+				Command="{x:Bind ViewModel.StartWatcherCommand}"
+				IsEnabled="{x:Bind ViewModel.CanStartWatcher, Mode=OneWay}"
+				Label="Start watcher">
+				<AppBarButton.Icon>
+					<FontIcon Glyph="&#xECC5;" />
+				</AppBarButton.Icon>
+			</AppBarButton>
+			<AppBarButton
+				Command="{x:Bind ViewModel.StopWatcherCommand}"
+				IsEnabled="{x:Bind ViewModel.CanStopWatcher, Mode=OneWay}"
+				Label="Stop watcher">
+				<AppBarButton.Icon>
+					<FontIcon Glyph="&#xED5A;" />
+				</AppBarButton.Icon>
+			</AppBarButton>
 			<AppBarToggleButton
-				Command="{x:Bind ViewModel.WatchFolderRecursivelyCheckCommand}"
 				Icon="Bookmarks"
+				IsChecked="{x:Bind ViewModel.IsRecursive, Mode=TwoWay}"
 				Label="Recursive" />
 		</CommandBar>
 
@@ -54,7 +77,7 @@
 			<ListView.ItemContainerStyle>
 				<Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
 					<Setter Property="VerticalContentAlignment" Value="Center" />
-					<Setter Property="Height" Value="72" />
+					<Setter Property="Height" Value="80" />
 				</Style>
 			</ListView.ItemContainerStyle>
 
@@ -66,21 +89,38 @@
 
 			<ListView.ItemTemplate>
 				<DataTemplate x:DataType="local:ChangeLogItem">
-					<Grid RowSpacing="2">
+					<Grid ColumnSpacing="12" RowSpacing="2">
 						<Grid.RowDefinitions>
 							<RowDefinition Height="Auto" />
 							<RowDefinition Height="Auto" />
 							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
-						<TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind NotificationReason}" />
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+						<FontIcon
+							Grid.Row="0"
+							Grid.RowSpan="3"
+							Grid.Column="0"
+							Foreground="{x:Bind NotificationReasonGlyphForeground}"
+							Glyph="{x:Bind NotificationReasonGlyph}" />
+						<TextBlock
+							Grid.Row="0"
+							Grid.Column="1"
+							Margin="0,0,0,4"
+							Style="{StaticResource BodyStrongTextBlockStyle}"
+							Text="{x:Bind NotificationReason}" />
 						<TextBlock
 							Grid.Row="1"
+							Grid.Column="1"
 							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
 							Style="{StaticResource CaptionTextBlockStyle}">
 							<Run Text="Before: " /><Run Text="{Binding Target1DisplayName}" />
 						</TextBlock>
 						<TextBlock
 							Grid.Row="2"
+							Grid.Column="1"
 							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
 							Style="{StaticResource CaptionTextBlockStyle}">
 							<Run Text="After: " /><Run Text="{Binding Target2DisplayName}" />

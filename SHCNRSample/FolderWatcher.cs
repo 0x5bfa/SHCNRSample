@@ -21,7 +21,7 @@ namespace SHCNRSample
 	{
 		private const uint c_uNotifyMessage = PInvoke.WM_USER + 200U;
 
-		private static Dictionary<SHCNE_ID, string>? _eventNames;
+		public IShellItem* pShellItem => _psi;
 
 		private uint _uRegister;
 		private IShellItem* _psi;
@@ -85,35 +85,6 @@ namespace SHCNRSample
 			PInvoke.CoTaskMemFree(psz);
 
 			return str;
-		}
-
-		public string? GetEventName(SHCNE_ID lEvent)
-		{
-			_eventNames ??= new()
-			{
-				[SHCNE_ID.SHCNE_RENAMEITEM] = "SHCNE_RENAMEITEM",
-				[SHCNE_ID.SHCNE_CREATE] = "SHCNE_CREATE",
-				[SHCNE_ID.SHCNE_DELETE] = "SHCNE_DELETE",
-				[SHCNE_ID.SHCNE_MKDIR] = "SHCNE_MKDIR",
-				[SHCNE_ID.SHCNE_RMDIR] = "SHCNE_RMDIR",
-				[SHCNE_ID.SHCNE_MEDIAINSERTED] = "SHCNE_MEDIAINSERTED",
-				[SHCNE_ID.SHCNE_MEDIAREMOVED] = "SHCNE_MEDIAREMOVED",
-				[SHCNE_ID.SHCNE_DRIVEREMOVED] = "SHCNE_DRIVEREMOVED",
-				[SHCNE_ID.SHCNE_DRIVEADD] = "SHCNE_DRIVEADD",
-				[SHCNE_ID.SHCNE_NETSHARE] = "SHCNE_NETSHARE",
-				[SHCNE_ID.SHCNE_NETUNSHARE] = "SHCNE_NETUNSHARE",
-				[SHCNE_ID.SHCNE_ATTRIBUTES] = "SHCNE_ATTRIBUTES",
-				[SHCNE_ID.SHCNE_UPDATEDIR] = "SHCNE_UPDATEDIR",
-				[SHCNE_ID.SHCNE_UPDATEITEM] = "SHCNE_UPDATEITEM",
-				[SHCNE_ID.SHCNE_SERVERDISCONNECT] = "SHCNE_SERVERDISCONNECT",
-				[SHCNE_ID.SHCNE_DRIVEADDGUI] = "SHCNE_DRIVEADDGUI",
-				[SHCNE_ID.SHCNE_RENAMEFOLDER] = "SHCNE_RENAMEFOLDER",
-				[SHCNE_ID.SHCNE_FREESPACE] = "SHCNE_FREESPACE",
-				[SHCNE_ID.SHCNE_UPDATEITEM] = "SHCNE_UPDATEITEM",
-			};
-
-			_eventNames.TryGetValue(lEvent, out var name);
-			return name;
 		}
 
 		private bool InitializeWndProc()
