@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SHCNRSample (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "SHCNRSample (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
