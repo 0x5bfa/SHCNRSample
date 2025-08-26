@@ -4,14 +4,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml.Data;
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.System.Com;
 using Windows.Win32.UI.Shell;
-using Windows.Win32.UI.Shell.Common;
-using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace SHCNRSample
 {
@@ -19,15 +15,6 @@ namespace SHCNRSample
 	{
 		private ObservableCollection<ChangeLogGroupItem> GroupedItems { get; set; } = [];
 		public CollectionViewSource? ItemsGroupableSource { get => field; set => SetProperty(ref field, value); }
-
-		private const uint c_notifyMessage = PInvoke.WM_USER + 200;
-
-		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
-		public delegate LRESULT WNDPROC(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam);
-
-		WNDPROC _wndProc = null!;
-
-		Dictionary<HWND, FolderWatcher> Watchers = [];
 
 		public MainPageViewModel()
 		{
@@ -47,45 +34,35 @@ namespace SHCNRSample
 
 		private void SetupWatcher()
 		{
-			using ComPtr<IShellItem> pShellItem = default;
-			fixed (char* pszPath = "C:\\Users\\onein\\OneDrive\\Desktop")
-				PInvoke.SHCreateItemFromParsingName(pszPath, null, IID.IID_IShellItem, (void**)pShellItem.GetAddressOf());
+			using var watcher = FolderWatcher.Create("C:\\Users\\onein\\OneDrive\\Desktop", DoAction)
+				?? throw new InvalidOperationException("Failed to create a folder watcher.");
 
-			HWND hwnd = default;
-
-			fixed (char* pszClassName = $"FolderWatcherWindowClass{Guid.NewGuid():B}")
-			{
-				_wndProc = new WNDPROC(WndProc);
-
-				WNDCLASSEXW wndClass = default;
-				wndClass.cbSize = (uint)sizeof(WNDCLASSEXW);
-				wndClass.lpfnWndProc = (delegate* unmanaged[Stdcall]<HWND, uint, WPARAM, LPARAM, LRESULT>)Marshal.GetFunctionPointerForDelegate(_wndProc);
-				wndClass.hInstance = PInvoke.GetModuleHandle(default(PWSTR));
-				wndClass.lpszClassName = pszClassName;
-
-				PInvoke.RegisterClassEx(&wndClass);
-				hwnd = PInvoke.CreateWindowEx(0, pszClassName, null, 0, 0, 0, 0, 0, HWND.HWND_MESSAGE, default, wndClass.hInstance, null);
-			}
-
-			var watcher = new FolderWatcher();
-			watcher.StartWatching(pShellItem.Get(), hwnd, c_notifyMessage, (long)SHCNE_ID.SHCNE_ALLEVENTS, false);
-
-			Watchers.Add(hwnd, watcher);
+			watcher.StartWatching(SHCNE_ID.SHCNE_ALLEVENTS);
 		}
 
-		private LRESULT WndProc(HWND hwnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+
+		private void DoAction(FolderWatcher @this, SHCNE_ID lEvent, nint psiPtr1, nint psiPtr2)
 		{
-			switch (uMsg)
+			PWSTR pwszFullPath1 = null, pwszFullPath2 = null;
+			if (psiPtr1 != nint.Zero)
+				((IShellItem*)psiPtr1)->GetDisplayName(SIGDN.SIGDN_DESKTOPABSOLUTEPARSING, &pwszFullPath1);
+			if (psiPtr2 != nint.Zero)
+				((IShellItem*)psiPtr2)->GetDisplayName(SIGDN.SIGDN_DESKTOPABSOLUTEPARSING, &pwszFullPath2);
+
+			if (lEvent is SHCNE_ID.SHCNE_RENAMEITEM or SHCNE_ID.SHCNE_RENAMEFOLDER)
 			{
-				case c_notifyMessage:
-					Watchers.TryGetValue(hwnd, out var watcher);
-					watcher?.OnChangeMessage(wParam, lParam);
-					break;
-				default:
-					return PInvoke.DefWindowProc(hwnd, uMsg, wParam, lParam);
+				Debug.WriteLine($"{@this.GetEventName(lEvent)}: {pwszFullPath1} => {pwszFullPath2}");
+			}
+			else
+			{
+				Debug.WriteLine($"{@this.GetEventName(lEvent)}: {pwszFullPath1} , {pwszFullPath2}");
 			}
 
-			return (LRESULT)0;
+			PInvoke.CoTaskMemFree(pwszFullPath1);
+			PInvoke.CoTaskMemFree(pwszFullPath2);
+
+			if (psiPtr1 != nint.Zero) ((IShellItem*)psiPtr1)->Release();
+			if (psiPtr2 != nint.Zero) ((IShellItem*)psiPtr2)->Release();
 		}
 	}
 }
