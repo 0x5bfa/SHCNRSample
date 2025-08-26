@@ -116,8 +116,12 @@ namespace SHCNRSample
 			_timer.Stop();
 
 			FolderAdded = false;
-			CanStartWatcher = true;
+			CanStartWatcher = false;
 			CanStopWatcher = false;
+
+			GroupedItems.Clear();
+			ItemsGroupableSource = null;
+			MessageText = "Pick a folder to watch its change";
 		}
 
 		private void ExecuteStartWatcherCommand()
@@ -133,7 +137,7 @@ namespace SHCNRSample
 
 		private void ExecuteStopWatcherCommand()
 		{
-			_folderWatcher?.StartWatching(SHCNE_ID.SHCNE_ALLEVENTS);
+			_folderWatcher?.StopWatching();
 			_timer.Start();
 
 			CanStartWatcher = true;
