@@ -36,7 +36,7 @@
 			<ListView.ItemContainerStyle>
 				<Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
 					<Setter Property="VerticalContentAlignment" Value="Center" />
-					<Setter Property="Height" Value="56" />
+					<Setter Property="Height" Value="72" />
 				</Style>
 			</ListView.ItemContainerStyle>
 
@@ -52,13 +52,21 @@
 						<Grid.RowDefinitions>
 							<RowDefinition Height="Auto" />
 							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
-						<TextBlock Text="{x:Bind NotificationReason}" />
+						<TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind NotificationReason}" />
 						<TextBlock
 							Grid.Row="1"
 							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							Style="{StaticResource CaptionTextBlockStyle}"
-							Text="{x:Bind TargetDisplayName}" />
+							Style="{StaticResource CaptionTextBlockStyle}">
+							<Run Text="Before: " /><Run Text="{Binding Target1DisplayName}" />
+						</TextBlock>
+						<TextBlock
+							Grid.Row="2"
+							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+							Style="{StaticResource CaptionTextBlockStyle}">
+							<Run Text="After: " /><Run Text="{Binding Target2DisplayName}" />
+						</TextBlock>
 					</Grid>
 				</DataTemplate>
 			</ListView.ItemTemplate>

@@ -26,19 +26,16 @@ namespace SHCNRSample
 		private uint _uRegister;
 		private HWND _hwnd;
 		WNDPROC? _wndProc;
-		private IShellItem* _psi;
 		private Action<FolderWatcher, SHCNE_ID, nint, nint>? _action;
 		private bool _watchRecursively;
+
+		public string? TargetPath { get; private set; }
 
 		private FolderWatcher() { } // Seal the default constructor
 
 		public static FolderWatcher? Create(string targetPath, Action<FolderWatcher, SHCNE_ID, nint, nint> action, bool watchRecursively = false)
 		{
-			IShellItem* psi = null;
-			fixed (char* pwszPath = targetPath)
-				PInvoke.SHCreateItemFromParsingName(pwszPath, null, IID.IID_IShellItem, (void**)&psi);
-
-			var watcher = new FolderWatcher() { _action = action, _psi = psi, _watchRecursively = watchRecursively };
+			var watcher = new FolderWatcher() { _action = action, _watchRecursively = watchRecursively, TargetPath = targetPath };
 			return watcher.InitializeWndProc() ? watcher : null;
 		}
 
@@ -46,18 +43,21 @@ namespace SHCNRSample
 		{
 			StopWatching();
 
-			ITEMIDLIST* pidlWatch;
-			HRESULT hr = PInvoke.SHGetIDListFromObject((IUnknown*)_psi, &pidlWatch);
+			using ComPtr<IShellItem> psi = default;
+			using ComHeapPtr<ITEMIDLIST> pidl = default;
+
+			fixed (char* pwszPath = TargetPath)
+				PInvoke.SHCreateItemFromParsingName(pwszPath, null, IID.IID_IShellItem, (void**)psi.GetAddressOf());
+
+			HRESULT hr = PInvoke.SHGetIDListFromObject((IUnknown*)psi.Get(), pidl.GetAddressOf());
 			if (SUCCEEDED(hr))
 			{
 				SHChangeNotifyEntry entry = default;
-				entry.pidl = pidlWatch;
+				entry.pidl = pidl.Get();
 				entry.fRecursive = _watchRecursively;
 
 				const SHCNRF_SOURCE nSources = SHCNRF_SOURCE.SHCNRF_ShellLevel | SHCNRF_SOURCE.SHCNRF_InterruptLevel | SHCNRF_SOURCE.SHCNRF_NewDelivery;
 				_uRegister = PInvoke.SHChangeNotifyRegister(_hwnd, nSources, (int)eventsToWatch, c_uNotifyMessage, 1, &entry);
-
-				PInvoke.CoTaskMemFree(pidlWatch);
 
 				return true;
 			}
@@ -171,8 +171,8 @@ namespace SHCNRSample
 
 		public void Dispose()
 		{
-			_wndProc = null; // Prevented GC from releasing the proc reference until this instance is disposed, but now it's fine to let it release this.
-			_psi->Release();
+			// Prevented GC from releasing the proc reference until this instance is disposed, but now it's fine to let it release this.
+			_wndProc = null;
 		}
 	}
 }

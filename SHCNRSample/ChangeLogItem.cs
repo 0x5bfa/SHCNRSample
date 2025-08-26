@@ -5,8 +5,10 @@ namespace SHCNRSample
 {
 	public class ChangeLogItem
 	{
-		public string? TargetDisplayName { get; set; }
-
 		public string? NotificationReason { get; set; }
+
+		public string? Target1DisplayName { get; set; }
+
+		public string? Target2DisplayName { get; set; }
 	}
 }
